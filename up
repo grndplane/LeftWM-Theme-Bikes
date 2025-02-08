@@ -1,0 +1,74 @@
+#!/bin/sh
+export SCRIPTPATH
+SCRIPTPATH="$( cd "$(dirname "$0")" || exit; pwd -P )"
+
+# Down the last running theme
+if [ -f "/tmp/leftwm-theme-down" ]; then
+    /tmp/leftwm-theme-down
+    rm /tmp/leftwm-theme-down
+fi
+ln -s "$SCRIPTPATH"/down /tmp/leftwm-theme-down
+
+# Set the theme.ron config
+leftwm command "LoadTheme $SCRIPTPATH/theme.ron"
+
+# Turn off Evolution tasks
+killall evolution-alarm
+
+# Boot picom 
+killall picom
+picom --config $HOME/.config/leftwm/themes/current/picom.conf &> /dev/null &
+
+# Set primary and secondary monitor width
+index=0
+leftwm-state -q -n -t "$SCRIPTPATH"/sizes.liquid | sed -r '/^\s*$/d' | while read -r width
+do
+  barname="mainbar$index"
+  monitor="$(polybar -m -r | awk -v i="$(( index + 1 ))" 'NR==i{print}' | sed s/:.*// | tr -d '\n')"
+  monitor=$monitor width=$(( width - 16 )) polybar -c "$SCRIPTPATH"/polybar.config $barname &
+  index=$((index+1))
+done
+
+# Load ARANDR settings for display
+/home/mike/.screenlayout/leftwm.sh &
+
+# Load Flameshot for screen capture
+killall flameshot
+/usr/bin/flameshot &
+
+# Policy Kit to elevate usr for software install
+/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 &
+
+# Volume control
+killall volumeicon
+volumeicon &
+
+# Mouse battery status
+killall solaar
+solaar --window=hide &
+
+# Start openrgb light control
+killall openrgb
+openrgb --startminimized --profile "mike1" &
+
+# Start ckb-next light control
+killall ckb-next
+ckb-next --background &
+
+# Start Network Manager
+killall nm-applet
+nohup nm-applet &
+
+# Connect line in to audio out
+pactl load-module module-loopback &
+
+# Randomize and set a new wallpaper
+feh --randomize --recursive --bg-center /mnt/md0/Motorcycles/
+
+# Start wallpaper updater in the background
+/home/mike/Shell_Scripts/update_wallpaper.sh &
+
+# Set conky guages for system monitoring
+killall conky
+/usr/bin/conky --daemonize --quiet --pause=5 --config=/home/mike/.conkyleft/conkyleft1 &
+/usr/bin/conky --daemonize --quiet --pause=5 --config=/home/mike/.conkyleft/conkyleft2 &
