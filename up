@@ -13,7 +13,7 @@ ln -s "$SCRIPTPATH"/down /tmp/leftwm-theme-down
 leftwm command "LoadTheme $SCRIPTPATH/theme.ron"
 
 # Turn off Evolution tasks
-killall evolution-alarm
+# killall evolution-alarm
 
 # Boot picom 
 killall picom
